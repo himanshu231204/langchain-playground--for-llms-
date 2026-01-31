@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.env.*
+
+# Virtual Environment
+venv/
+.env/
+.venv/
+
+# LangChain / API keys
+secrets/
+config.yaml
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store

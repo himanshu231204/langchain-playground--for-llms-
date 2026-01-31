@@ -1,0 +1,18 @@
+# Main packages
+langchain
+langchain-community
+langchain-text-splitters
+
+# Integrations
+langchain-openai
+langchain-google-genai
+langchain-huggingface
+transformers
+huggingface-hub
+
+# Utilities
+python-dotenv
+
+# Machine Learning Utilities
+numpy
+scikit-learn
