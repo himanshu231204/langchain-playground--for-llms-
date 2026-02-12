@@ -1,0 +1,349 @@
+These notes combine **official documentation ideas + practical usage + comparisons** and are **detailed and thorough** for deep learning or revision. 📘
+
+---
+
+✅ What Runnables are
+✅ Runnable core interface methods
+✅ Common Runnable types
+✅ Runnable composition (Sequential / Parallel / Branch)
+✅ How Agents and Chains relate
+✅ Runnable vs Chain vs LCEL
+✅ Streaming, Async, Batching
+✅ Internal mechanics & practical tips
+---
+# **Runnables in LangChain — Detailed Notes (.txt format)**
+
+---
+
+## **1) What Is a Runnable?**
+
+**Definition:**
+A **Runnable** is the **core standard primitive in LangChain** — a *generic executable unit* that takes an input, does something, and returns an output.
+It defines a **uniform interface** that all core components (LLMs, prompts, output parsers, retrievers, tools, functions, chains) follow. ([LangChain Reference][1])
+
+**Why LangChain uses Runnables:**
+✔ Provides a single consistent API for many components
+✔ Makes chaining or composing steps easy
+✔ Adds support for streaming, batching, async execution
+✔ Enables flexible workflows (parallel execution, branching, conditional logic)
+✔ Helps build complex AI flows modularly instead of hard-coding sequences. ([LangChain Reference][1])
+
+---
+
+## **2) Runnable Core Interface**
+
+Every Runnable supports:
+
+```
+.invoke(input)     → run once → returns result
+.ainvoke(input)    → async invoke
+.batch(inputs)    → run multiple inputs
+.abatch(inputs)   → async batch
+.stream(input)    → streaming output
+.astream(input)   → async streaming
+```
+
+These methods provide a **uniform way to execute logic** regardless of what the runnable actually is. ([LangChain Reference][2])
+
+**Key idea:**
+Runnables don’t just run. They support **batching, streaming, and async operations** by default.
+
+---
+
+## **3) Main Types of Runnables**
+
+Here’s a rundown of the most common Runnable primitives:
+
+---
+
+### **3.1 RunnableLambda**
+
+Converts a normal Python/JS function into a Runnable such that it can be part of a chain.
+
+Example idea:
+
+```python
+from langchain_core.runnables import RunnableLambda
+add_one = RunnableLambda(lambda x: x + 1)
+result = add_one.invoke(10)  # → 11
+```
+
+Wraps custom logic as a runnable unit. ([LangChain Reference][3])
+
+---
+
+### **3.2 RunnableSequence**
+
+A **sequence/chain** of steps executed one after the other.
+
+Instead of writing:
+
+```
+step1(data)
+step2(step1_output)
+step3(step2_output)
+```
+
+You write:
+
+```
+chain = prompt | llm | parser
+```
+
+This creates a **RunnableSequence**: input flows through steps. ([LangChain Reference][4])
+
+---
+
+### **3.3 RunnableParallel**
+
+Runs multiple runnables **in parallel on the same input**, and returns a mapping of results.
+
+Example concept:
+
+```
+{
+  "summary": summary_chain,
+  "sentiment": sentiment_chain
+}
+```
+
+Input goes into both branches simultaneously. ([LangChain Reference][5])
+
+---
+
+### **3.4 RunnableBranch**
+
+A **conditional runnable** that routes execution based on a test.
+
+Example concept:
+
+```
+if length > 300:
+    use long-summary
+else:
+    use short-summary
+```
+
+This is similar to `if-else` logic inside a pipeline. ([linkedin.com][6])
+
+---
+
+### **3.5 RunnablePassthrough**
+
+Does nothing — simply passes the input forward unchanged.
+
+Useful for:
+
+* Debugging
+* Serving as placeholder logic
+* Combining with parallel execution for keys that don’t transform input. ([Medium][7])
+
+---
+
+### **3.6 (Other Advanced Types)**
+
+These are not always required but useful:
+
+✔ RunnableGenerator — for custom streaming logic
+✔ RunnableWithFallbacks — fallback behavior
+✔ RunnableWithMessageHistory — manage conversation history
+✔ RunnableWithRetry — add retry logic
+✔ RunnableWithTimeout — enforce execution limits ([Medium][8])
+
+---
+
+## **4) Composition — Building Workflows**
+
+Runnables shine because you can **compose them easily**.
+
+### **4.1 Sequential Composition**
+
+Connect runnables end-to-end:
+
+```
+prompt | model | parser
+```
+
+Equivalent to:
+
+```
+parser(model(prompt(input)))
+```
+
+---
+
+### **4.2 Parallel Composition**
+
+```
+{
+  "summary": summary_chain,
+  "quiz": quiz_chain
+}
+```
+
+→ both chains run on input
+→ combined results returned as dictionary. ([LangChain Reference][5])
+
+---
+
+### **4.3 Mixed Composition**
+
+You can combine sequence + parallel:
+
+```
+prompt
+  ↓
+parallel (summary, sentiment)
+  ↓
+merge/parser
+```
+
+This yields more complex pipelines where results from parallel paths can be aggregated. ([linkedin.com][6])
+
+---
+
+## **5) LCEL — LangChain Expression Language**
+
+LCEL is the **new declarative way** to build pipelines using Runnables.
+It uses familiar syntax like `|` (pipe) and `dict` literals to compose runnables more naturally:
+
+```
+chain = prompt | llm | parser
+```
+
+LCEL is basically a **syntactic sugar** that compiles down to RunnableSequence / RunnableParallel internally. ([langchain-opentutorial.gitbook.io][9])
+
+---
+
+## **6) Runnables vs Old Chains vs Agents**
+
+### **Old Chains**
+
+Traditionally, LangChain had many different Chain classes (LLMChain, SQLDatabaseChain, etc.).
+Drawbacks:
+
+* Harder to unify
+* Harder to compose
+* Limited streaming support
+
+---
+
+### **Runnables**
+
+Unified interface:
+
+* Works with prompt templates
+* Works with LLM models
+* Works with output parsers
+* Works with custom functions
+
+This makes workflows more modular and composable. ([Medium][10])
+
+---
+
+### **Agents**
+
+Agents (higher-level decision systems that call tools) **also use Runnables internally**.
+
+An AgentExecutor itself is a Runnable that:
+
+* receives input
+* makes decisions
+* runs tools
+* returns outputs.
+  Thus, the entire agent becomes an executable runnable pipeline.
+
+---
+
+## **7) Streaming, Async & Batching**
+
+Modern AI applications often benefit from partial outputs and parallel processing.
+
+Runnables provide built-in support for:
+✔ streaming responses (chunk by chunk)
+✔ asynchronous execution
+✔ batch execution across multiple inputs
+✔ nested streaming + parallelism ([LangChain Reference][2])
+
+This is a big upgrade over older designs where streaming had to be implemented manually.
+
+---
+
+## **8) Practical Usage Patterns**
+
+### **Custom Logic**
+
+Use RunnableLambda to wrap any business logic and drop it into a chain.
+
+---
+
+### **Conditional Logic**
+
+Use RunnableBranch when what you do next depends on the output:
+
+```
+if model_response contains long text: summarize
+else: keep original
+```
+
+---
+
+### **Parallel Tasks**
+
+Use RunnableParallel for tasks like:
+
+* summarization
+* sentiment analysis
+* keyword extraction
+  in one pass.
+
+---
+
+## **9) Benefits of Runnables**
+
+📌 **Modularity** — split work into smaller, reusable steps
+📌 **Composability** — easy to connect runnables
+📌 **Flexibility** — control logic paths
+📌 **Performance benefits** — parallel execution
+📌 **Streaming & Async** — built-in support
+📌 **Unified interface** — makes everything consistent ([DEV Community][11])
+
+---
+
+## **10) Summary**
+
+```
+Runnable = input → do something → output
+```
+
+By standardizing the interface across different components, LangChain made building complex AI systems easier, more robust, and more maintainable. ([LangChain Reference][1])
+
+---
+
+## **Recommended Steps to Practice**
+
+✔ Build simple chains using `|` operator
+✔ Wrap custom functions with RunnableLambda
+✔ Experiment with RunnableParallel
+✔ Try conditional flows with RunnableBranch
+✔ Use streaming for real-time outputs
+✔ Explore async pipelines
+
+---
+
+**END of Notes**
+
+---
+
+
+[1]: https://reference.langchain.com/python/langchain_core/runnables/?utm_source=chatgpt.com "Runnables | LangChain Reference"
+[2]: https://reference.langchain.com/v0.3/python/core/runnables/langchain_core.runnables.base.Runnable.html?utm_source=chatgpt.com "Runnable — 🦜🔗 LangChain documentation"
+[3]: https://reference.langchain.com/v0.3/python/core/runnables/langchain_core.runnables.base.RunnableLambda.html?utm_source=chatgpt.com "RunnableLambda — 🦜🔗 LangChain documentation"
+[4]: https://reference.langchain.com/v0.3/python/core/runnables/langchain_core.runnables.base.RunnableSequence.html?utm_source=chatgpt.com "RunnableSequence — 🦜🔗 LangChain documentation"
+[5]: https://reference.langchain.com/v0.3/python/core/runnables/langchain_core.runnables.base.RunnableParallel.html?utm_source=chatgpt.com "RunnableParallel — 🦜🔗 LangChain documentation"
+[6]: https://www.linkedin.com/posts/sachin-nomula_langchain-runnables-lcel-activity-7404160486503723008-Rj2I?utm_source=chatgpt.com "Unlocking LangChain with Runnables and LCEL"
+[7]: https://medium.com/algomart/a-practical-walkthrough-of-langchain-runnables-f3555510a4c6?utm_source=chatgpt.com "A Practical Walkthrough of LangChain Runnables"
+[8]: https://medium.com/%40adatiyavinayshaileshbhai/what-is-a-runnable-interface-in-langchain-987991752afa?utm_source=chatgpt.com "🔩 What Is a Runnable Interface in LangChain?"
+[9]: https://langchain-opentutorial.gitbook.io/langchain-opentutorial/01-basic/07-lcel-interface?utm_source=chatgpt.com "LCEL Interface | LangChain OpenTutorial"
+[10]: https://medium.com/%40snehithat001/a-beginner-guide-lanchain-chains-lcel-runnable-services-ea4343ad6a9e?utm_source=chatgpt.com "A Beginner Guide: LanChain Chains, LCEL, Runnable ..."
+[11]: https://dev.to/aiengineering/a-beginners-guide-to-getting-started-with-runnables-in-langchain-4g79?utm_source=chatgpt.com "A Beginner's Guide to Getting Started with Runnables in ..."
