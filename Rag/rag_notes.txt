@@ -1,0 +1,155 @@
+## 📄 What is a **Document Loader** in LangChain?
+
+A **Document Loader** in LangChain is a component that **loads data from different sources and converts it into a standard Document format** that LangChain can process.
+
+In simple words:
+
+> 🔹 It is the **entry point of data** into your RAG pipeline.
+
+Without a document loader → your LLM has nothing to read.
+
+---
+
+## 🔹 Why Do We Need It?
+
+LLMs cannot directly read:
+
+* PDFs
+* Websites
+* YouTube videos
+* CSV files
+* Databases
+
+So LangChain provides **Document Loaders** to:
+
+1. Read the file/source
+2. Extract text
+3. Convert it into `Document` objects
+
+---
+
+## 🔹 What Does It Return?
+
+It returns a list of **Document objects**.
+
+Each Document contains:
+
+```python
+Document(
+    page_content="Actual text here",
+    metadata={"source": "file_name.pdf"}
+)
+```
+
+So it gives:
+
+* ✅ Text
+* ✅ Metadata (source info, page number, etc.)
+
+---
+
+# 🔹 Common Document Loaders in LangChain
+
+---
+
+## 1️⃣ PDF Loader
+
+```python
+from langchain.document_loaders import PyPDFLoader
+
+loader = PyPDFLoader("gate_notes.pdf")
+documents = loader.load()
+```
+
+👉 Reads PDF and returns one Document per page.
+
+---
+
+## 2️⃣ Text File Loader
+
+```python
+from langchain.document_loaders import TextLoader
+
+loader = TextLoader("notes.txt")
+documents = loader.load()
+```
+
+---
+
+## 3️⃣ CSV Loader
+
+```python
+from langchain.document_loaders import CSVLoader
+
+loader = CSVLoader("data.csv")
+documents = loader.load()
+```
+
+---
+
+## 4️⃣ Web Loader (Website)
+
+```python
+from langchain.document_loaders import WebBaseLoader
+
+loader = WebBaseLoader("https://example.com")
+documents = loader.load()
+```
+
+---
+
+## 5️⃣ Directory Loader (Load multiple files)
+
+```python
+from langchain.document_loaders import DirectoryLoader
+
+loader = DirectoryLoader("./docs/")
+documents = loader.load()
+```
+
+---
+
+# 🔥 Where It Fits in RAG
+
+```
+Raw Data (PDF / Web / CSV)
+        ↓
+Document Loader
+        ↓
+Documents (structured format)
+        ↓
+Text Splitter
+        ↓
+Embeddings
+        ↓
+Vector DB
+```
+
+---
+
+# 🔹 Simple Real-Life Example
+
+Imagine you want to build a chatbot for your GATE notes.
+
+Step 1:
+You have:
+
+* Compiler.pdf
+* OS.pdf
+* TOC.pdf
+
+Step 2:
+Document Loader reads them.
+
+Step 3:
+Now LangChain understands your notes.
+
+---
+
+# 🎯 Interview-Ready Definition
+
+> A Document Loader in LangChain is a component that loads data from external sources and converts it into standardized Document objects containing text and metadata, which are then used in RAG pipelines for embedding and retrieval.
+
+---
+
+
