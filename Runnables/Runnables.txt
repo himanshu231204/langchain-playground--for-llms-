@@ -331,19 +331,323 @@ By standardizing the interface across different components, LangChain made build
 
 ---
 
-**END of Notes**
+
+## 🔷 Types of Runnables in LangChain
+
+In LangChain, **Runnables** are categorized into two main types:
+
+```
+1️⃣ Primitive Runnables
+2️⃣ Task-Specific Runnables
+```
+
+This classification helps you understand:
+
+* Which ones are **low-level building blocks**
+* Which ones are **high-level ready-made components**
+
+---
+
+# 🧱 1️⃣ Primitive Runnables
+
+Primitive Runnables are the **core foundational building blocks**.
+
+They don’t perform a specific AI task like summarization or retrieval.
+Instead, they provide **execution logic and composition capabilities**.
+
+Think of them like:
+
+> 🏗️ LEGO blocks used to build workflows.
+
+---
+
+## 🔹 Common Primitive Runnables
+
+---
+
+### 1️⃣ RunnableLambda
+
+Wraps a normal Python function into a Runnable.
+
+Purpose:
+
+* Add custom logic
+* Preprocessing
+* Postprocessing
+* Business logic
+
+Example:
+
+```
+Input → Python Function → Output
+```
+
+---
+
+### 2️⃣ RunnableSequence
+
+Runs multiple Runnables **in order (step-by-step)**.
+
+Created automatically when using:
+
+```
+chain = A | B | C
+```
+
+Flow:
+
+```
+Input → A → B → C → Output
+```
+
+---
+
+### 3️⃣ RunnableParallel
+
+Runs multiple Runnables **at the same time** on the same input.
+
+Flow:
+
+```
+         ┌─ Chain A
+Input ───┤
+         └─ Chain B
+```
+
+Returns:
+
+```
+{
+  "A": resultA,
+  "B": resultB
+}
+```
+
+---
+
+### 4️⃣ RunnableBranch
+
+Implements conditional logic (if-else routing).
+
+Flow:
+
+```
+Input
+  │
+  ├─ If condition → Chain A
+  └─ Else → Chain B
+```
+
+Used for:
+
+* Smart routing
+* Tool selection
+* Decision systems
+
+---
+
+### 5️⃣ RunnablePassthrough
+
+Does nothing. Just forwards input.
+
+Useful when:
+
+* You need original input preserved
+* Combining parallel outputs
+
+---
+
+### 6️⃣ RunnableGenerator
+
+Used for custom streaming behavior.
+
+---
+
+### 7️⃣ Wrapper Runnables
+
+These add execution behavior:
+
+* with_retry()
+* with_fallbacks()
+* with_timeout()
+* with_config()
+
+These modify how a runnable behaves.
+
+---
+
+## 🔹 What Primitive Runnables Do
+
+They control:
+
+✔ Execution order
+✔ Parallelism
+✔ Branching
+✔ Error handling
+✔ Streaming
+✔ Retry
+✔ Async
+
+They are **infrastructure-level components**.
+
+---
+
+# 🎯 2️⃣ Task-Specific Runnables
+
+These are **higher-level Runnables** built to perform specific AI tasks.
+
+They usually wrap models, prompts, retrievers, tools, or chains.
+
+Think of them as:
+
+> 🧠 Functional AI components ready to do real tasks.
+
+---
+
+## 🔹 Examples of Task-Specific Runnables
+
+---
+
+### 1️⃣ Chat Models / LLMs
+
+Example:
+
+* ChatOpenAI
+* Other chat models
+
+These are Runnables because:
+
+```
+Input (prompt/messages) → Model → Output
+```
+
+---
+
+### 2️⃣ Prompt Templates
+
+PromptTemplate and ChatPromptTemplate are Runnables.
+
+They transform structured input into formatted prompts.
+
+```
+Input variables → formatted prompt
+```
+
+---
+
+### 3️⃣ Output Parsers
+
+StrOutputParser, JSONOutputParser, etc.
+
+They convert model output into:
+
+* String
+* JSON
+* Structured data
+
+---
+
+### 4️⃣ Retrievers
+
+Vector store retrievers are Runnables.
+
+```
+Query → Relevant Documents
+```
+
+Used in:
+
+* RAG systems
+
+---
+
+### 5️⃣ Tools
+
+Tools (used in agents) are Runnables.
+
+```
+Input → Tool execution → Output
+```
+
+---
+
+### 6️⃣ Chains
+
+Modern chains are built using Runnables.
+
+Example:
+
+```
+Prompt | LLM | Parser
+```
+
+That whole chain is a Runnable.
+
+---
+
+### 7️⃣ Agents
+
+Agents internally use Runnables for:
+
+* Decision making
+* Tool calling
+* Planning
+
+AgentExecutor itself behaves like a Runnable.
+
+---
+
+# 🆚 Primitive vs Task-Specific Runnables
+
+| Feature                    | Primitive       | Task-Specific |
+| -------------------------- | --------------- | ------------- |
+| Level                      | Low-level       | High-level    |
+| Purpose                    | Execution logic | AI task logic |
+| Example                    | RunnableLambda  | ChatOpenAI    |
+| Controls flow?             | Yes             | No            |
+| Performs AI task?          | No              | Yes           |
+| Used to compose pipelines? | Yes             | Yes           |
+
+---
+
+## 🧠 Simple Mental Model
+
+Primitive Runnables = HOW to run
+Task-Specific Runnables = WHAT to run
+
+Example:
+
+```
+Prompt (task-specific)
+   ↓
+LLM (task-specific)
+   ↓
+Parser (task-specific)
+
+Sequence operator | (primitive)
+```
+
+---
+
+# 🔥 Real Example
+
+```
+clean_text (Primitive)
+   ↓
+Prompt (Task-specific)
+   ↓
+LLM (Task-specific)
+   ↓
+Parser (Task-specific)
+   ↓
+Branch (Primitive)
+```
+
+Primitive Runnables control execution.
+Task-Specific Runnables perform AI work.
 
 ---
 
 
-[1]: https://reference.langchain.com/python/langchain_core/runnables/?utm_source=chatgpt.com "Runnables | LangChain Reference"
-[2]: https://reference.langchain.com/v0.3/python/core/runnables/langchain_core.runnables.base.Runnable.html?utm_source=chatgpt.com "Runnable — 🦜🔗 LangChain documentation"
-[3]: https://reference.langchain.com/v0.3/python/core/runnables/langchain_core.runnables.base.RunnableLambda.html?utm_source=chatgpt.com "RunnableLambda — 🦜🔗 LangChain documentation"
-[4]: https://reference.langchain.com/v0.3/python/core/runnables/langchain_core.runnables.base.RunnableSequence.html?utm_source=chatgpt.com "RunnableSequence — 🦜🔗 LangChain documentation"
-[5]: https://reference.langchain.com/v0.3/python/core/runnables/langchain_core.runnables.base.RunnableParallel.html?utm_source=chatgpt.com "RunnableParallel — 🦜🔗 LangChain documentation"
-[6]: https://www.linkedin.com/posts/sachin-nomula_langchain-runnables-lcel-activity-7404160486503723008-Rj2I?utm_source=chatgpt.com "Unlocking LangChain with Runnables and LCEL"
-[7]: https://medium.com/algomart/a-practical-walkthrough-of-langchain-runnables-f3555510a4c6?utm_source=chatgpt.com "A Practical Walkthrough of LangChain Runnables"
-[8]: https://medium.com/%40adatiyavinayshaileshbhai/what-is-a-runnable-interface-in-langchain-987991752afa?utm_source=chatgpt.com "🔩 What Is a Runnable Interface in LangChain?"
-[9]: https://langchain-opentutorial.gitbook.io/langchain-opentutorial/01-basic/07-lcel-interface?utm_source=chatgpt.com "LCEL Interface | LangChain OpenTutorial"
-[10]: https://medium.com/%40snehithat001/a-beginner-guide-lanchain-chains-lcel-runnable-services-ea4343ad6a9e?utm_source=chatgpt.com "A Beginner Guide: LanChain Chains, LCEL, Runnable ..."
-[11]: https://dev.to/aiengineering/a-beginners-guide-to-getting-started-with-runnables-in-langchain-4g79?utm_source=chatgpt.com "A Beginner's Guide to Getting Started with Runnables in ..."
+
+**END of Notes**
