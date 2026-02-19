@@ -94,4 +94,4 @@ updated_doc1 = Document(
 vector_store.update_documents(ids=['e896ff98-61e6-4921-93ff-371806843ce0'], documents=[updated_doc1])
 print("Document updated successfully!")
 
-print(view_docs)
+print(doc1)
