@@ -68,3 +68,11 @@ results = retriever.invoke(query)
 # Print the retrieved documents
 for i, doc in enumerate(results):
     print(f"Document {i+1}: {doc.page_content}")
+    
+    
+    
+ 
+ 
+ #MMR(maximal marginal relevance) retriever   used to diversify the results by selecting documents that are both relevant to the query and diverse from each other.
+    
+    
