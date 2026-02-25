@@ -1,8 +1,8 @@
 from langchain_ollama import OllamaEmbeddings, ChatOllama
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
-from langchain_experimental.retrievers import ContextualCompressionRetriever
-from langchain_experimental.document_compressors import LLMChainExtractor
+from langchain.retrievers import ContextualCompressionRetriever # type: ignore
+from langchain.retrievers.document_compressors import LLMChainExtractor # type: ignore
 # Embeddings
 embeddings_model = OllamaEmbeddings(
     model="nomic-embed-text-v2-moe:latest"
