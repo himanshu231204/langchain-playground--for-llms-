@@ -3,7 +3,7 @@ from langchain_core.messages import HumanMessage ,ToolMessage
 from langchain_community.tools import tool
 from langchain_core.tools import InjectedToolArg
 from typing import Annotated
-import requests
+import requests,json
 
 
 llm = ChatOllama(
@@ -27,9 +27,9 @@ def convert(base_currency:int, conversion_rate:Annotated[float, InjectedToolArg]
 
 #print(convert.args)
 
-print(get_conversion_factors.invoke({"base_currency": "USD", "target_currency": "INR"}))
+#print(get_conversion_factors.invoke({"base_currency": "USD", "target_currency": "INR"}))
 
-print(convert.invoke({"base_currency": 100, "conversion_rate": 82.5}))
+#print(convert.invoke({"base_currency": 100, "conversion_rate": 82.5}))
 
 
 #binding the tools with llm
@@ -38,8 +38,28 @@ llm_tool = llm.bind_tools([get_conversion_factors, convert])
 
 #tool calls with llm
 
-message = [HumanMessage("I want to convert 100 USD to INR, please get the conversion rate and then convert the amount for me")]
+messages = [HumanMessage("I want to convert 100 USD to INR, please get the conversion rate and then convert the amount for me")]
 
-ai_message = llm_tool.invoke(message) #invoke the llm with tools
-print(ai_message,"\n",ai_message.tool_calls) # tool calls requested by llm
+ai_message = llm_tool.invoke(messages) #invoke the llm with tools
+#print(ai_message)
+#print(ai_message.tool_calls) #print(ai_message.tool_calls) # get the arguments for the tool calls made by the llm
 
+
+
+for tool_call in ai_message.tool_calls:
+  # execute the 1st tool and get the value of conversion rate
+  if tool_call['name'] == 'get_conversion_factors':
+    tool_message1 = get_conversion_factors.invoke(tool_call)
+    # fetch this conversion rate
+    conversion_rate = json.loads(tool_message1.content)['conversion_rate']
+    # append this tool message to messages list
+    messages.append(tool_message1)
+  # execute the 2nd tool using the conversion rate from tool 1
+  if tool_call['name'] == 'convert':
+    # fetch the current arg
+    tool_call['args']['conversion_rate'] = conversion_rate
+    tool_message2 = convert.invoke(tool_call)
+    messages.append(tool_message2)
+    
+    
+print(messages)    
