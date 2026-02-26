@@ -1,4 +1,5 @@
 from langchain_ollama import ChatOllama
+from langchain_core.messages import HumanMessage ,ToolMessage
 from langchain_community.tools import tool
 from langchain_core.tools import InjectedToolArg
 from typing import Annotated
@@ -27,3 +28,18 @@ def convert(base_currency:int, conversion_rate:Annotated[float, InjectedToolArg]
 #print(convert.args)
 
 print(get_conversion_factors.invoke({"base_currency": "USD", "target_currency": "INR"}))
+
+print(convert.invoke({"base_currency": 100, "conversion_rate": 82.5}))
+
+
+#binding the tools with llm
+
+llm_tool = llm.bind_tools([get_conversion_factors, convert])
+
+#tool calls with llm
+
+message = [HumanMessage("I want to convert 100 USD to INR, please get the conversion rate and then convert the amount for me")]
+
+ai_message = llm_tool.invoke(message) #invoke the llm with tools
+print(ai_message,"\n",ai_message.tool_calls) # tool calls requested by llm
+
