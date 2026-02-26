@@ -41,9 +41,10 @@ llm_tool = llm.bind_tools([get_conversion_factors, convert])
 messages = [HumanMessage("I want to convert 100 USD to INR, please get the conversion rate and then convert the amount for me")]
 
 ai_message = llm_tool.invoke(messages) #invoke the llm with tools
+
 #print(ai_message)
 #print(ai_message.tool_calls) #print(ai_message.tool_calls) # get the arguments for the tool calls made by the llm
-
+messages.append(ai_message) #append the ai message to messages list to execute the tool calls and get the results
 
 
 for tool_call in ai_message.tool_calls:
@@ -62,4 +63,8 @@ for tool_call in ai_message.tool_calls:
     messages.append(tool_message2)
     
     
-print(messages)    
+#print(messages)   
+
+# the final response from llm after executing the tool calls and appending the tool messages to the messages list
+final_response = llm_tool.invoke(messages).content
+print(final_response) 
