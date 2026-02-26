@@ -15,7 +15,7 @@ llm = ChatOllama(
 def get_conversion_factors(base_currency:str, target_currency:str) -> float:
     """ this function will convert the base currency to target currency and return the converted amount"""
     url=f' https://v6.exchangerate-api.com/v6/437eb96292d41576c190633b/pair/{base_currency}/{target_currency}'
-    response = requests.get(url)
+    response = requests.get(url) # make the API request to get the conversion rate
     return response.json()
 
 
@@ -24,5 +24,6 @@ def convert(base_currency:int, conversion_rate:Annotated[float, InjectedToolArg]
     """ this function will convert the base currency to target currency and return the converted amount"""
     return base_currency * conversion_rate
 
-print(convert.args)
+#print(convert.args)
 
+print(get_conversion_factors.invoke({"base_currency": "USD", "target_currency": "INR"}))
