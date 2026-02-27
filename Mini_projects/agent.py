@@ -1,5 +1,6 @@
 from langchain_ollama import ChatOllama
 from langchain_core.tools import tool
+from langgraph.prebuilt import create_react_agent
 import requests
 from langchain_community.tools import DuckDuckGoSearchRun
 
@@ -26,9 +27,9 @@ def get_weather(city:str) -> str:
 
 #using the react_agent and agent_executor to bind the tools with llm and execute the tool calls
 
-from langchain.agents import create_react_agent
-from langchain.agents import AgentExecutor
-from langchain import hub
+from langchain.agents import create_tool_calling_agent, AgentExecutor
+
+from langchain import hub 
 
 # step-2
 #pull the ReAct prompt template from the hub
@@ -38,7 +39,7 @@ prompt=hub.pull('hwchase17/react')  #pulling the ReAct prompt template from the 
 # step-3
 # creating the ReAct agent using the prompt template and llm
 
-agent=create_react_agent(llm=llm, prompt=prompt, tools=[search_tool, get_weather])
+agent=create_tool_calling_agent(llm=llm, prompt=prompt, tools=[search_tool, get_weather])
 
 
 # step-4
