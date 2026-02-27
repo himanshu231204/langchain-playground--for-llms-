@@ -1,16 +1,30 @@
-from langchain import hub
-from langchain.agents import AgentExecutor, create_react_agent
+from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_openai import ChatOpenAI
+from langchain.tools import tool
 
-# 1. Pull the prompt template
-prompt = hub.pull("hwchase17/react")
+# 1. LLM
+llm = ChatOpenAI(model="gpt-4o")
 
-# 2. Initialize the LLM and Tools
-llm = ChatOpenAI(model="gpt-4")
-tools = [...] # Your list of tools
+# 2. Define Tool
+@tool
+def multiply(a: int, b: int) -> int:
+    """Multiply two numbers."""
+    return a * b
 
-# 3. Construct the ReAct agent
-agent = create_react_agent(llm, tools, prompt)
+tools = [multiply]
 
-# 4. Create the executor
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+# 3. Create Agent
+agent = create_tool_calling_agent(llm, tools)
+
+# 4. Executor
+agent_executor = AgentExecutor(
+    agent=agent,
+    tools=tools,
+    verbose=True
+)
+
+response = agent_executor.invoke(
+    {"input": "What is 6 multiplied by 7?"}
+)
+
+print(response)
