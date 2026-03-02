@@ -34,4 +34,4 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pytest
+        pytest || ([ $? -eq 5 ] && echo "No tests collected (pytest exit code 5) — skipping." && exit 0) || exit $?
