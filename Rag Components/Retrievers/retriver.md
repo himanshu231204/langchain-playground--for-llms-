@@ -1,348 +1,262 @@
-========================================
-RETRIEVER IN LANGCHAIN – COMPLETE NOTES
-========================================
+# 🔎 Retrievers in LangChain – Notes
 
-1) WHAT IS A RETRIEVER?
+> Comprehensive notes on retrievers — the search component in RAG pipelines.
 
-A Retriever in LangChain is a component that:
+## Table of Contents
 
-- Takes a user query
-- Searches the knowledge base (vector store/documents)
-- Returns the most relevant documents
+- [What is a Retriever?](#what-is-a-retriever)
+- [How Retriever Works](#how-retriever-works)
+- [Types of Retrievers](#types-of-retrievers)
+- [Important Parameters](#important-parameters)
+- [Retriever vs Vector Store](#retriever-vs-vector-store)
+- [Retriever in LCEL](#retriever-in-lcel)
+- [Why Retrievers Are Important](#why-retrievers-are-important)
+- [Common Interview Questions](#common-interview-questions)
 
-Important:
-Retriever does NOT generate answers.
-It only retrieves relevant information.
+## Related Notes
 
-Retriever = Search Engine
-LLM = Answer Generator
+- [MMR Retriever](mmr.md)
+- [MultiQuery Retriever](MultiQuery_Retriever_Notes.md)
+- [Contextual Compression Retriever](Contextual_Compression_Retriever_Notes.md)
+- [Vector Store Notes](../Vectors%20Stores/vector_store_notes.md)
+- [Chroma DB Notes](../Vectors%20Stores/chroma_db_notes.md)
+- [Document Loaders (RAG)](../rag_notes.md)
+- [Text Splitter Notes](../text_splitter_langchain_notes.md)
 
+---
 
-----------------------------------------
-2) RETRIEVER IN RAG PIPELINE
-----------------------------------------
+## What is a Retriever?
 
-RAG Flow:
+A **Retriever** in LangChain is a component that:
 
+1. Takes a user query
+2. Searches the knowledge base (vector store/documents)
+3. Returns the most relevant documents
+
+> ⚠️ **Important:** Retriever does NOT generate answers. It only retrieves relevant information.
+>
+> **Retriever = Search Engine** | **LLM = Answer Generator**
+
+---
+
+## How Retriever Works
+
+### Step by Step
+
+```
+Step 1: Convert query to embedding
+        Query text → Embedding Model → Query vector
+
+Step 2: Similarity search
+        Query vector compared to stored document vectors
+
+Step 3: Return Top-K documents
+        Most similar documents returned (e.g., top 3 or 5)
+```
+
+### Similarity Formula (Cosine Similarity)
+
+```
+similarity(A, B) = (A · B) / (||A|| × ||B||)
+```
+
+Higher value → more similar documents.
+
+### RAG Flow
+
+```
 User Query
-    ↓
-Retriever (Search relevant docs)
-    ↓
-LLM (Generate answer using retrieved docs)
-    ↓
-Final Response
+    │
+    ▼
+Embedding Model
+    │
+    ▼
+Retriever (Vector Search)  ◄── You are here
+    │
+    ▼
+Top-K Documents
+    │
+    ▼
+LLM
+    │
+    ▼
+Final Answer
+```
 
-Without Retriever → LLM guesses.
-With Retriever → LLM gives grounded answers.
+---
 
+## Types of Retrievers
 
-----------------------------------------
-3) HOW RETRIEVER WORKS (STEP BY STEP)
-----------------------------------------
+### 1. Vector Store Retriever (Most Common)
 
-Step 1: Convert Query to Embedding
-User query is converted into a vector using an embedding model.
+Basic cosine similarity search over embedded documents.
 
-Step 2: Similarity Search
-Query vector is compared with stored document vectors.
-
-Step 3: Return Top K Documents
-Return top K most similar documents (e.g., 3 or 5).
-
-
-----------------------------------------
-4) TYPES OF RETRIEVERS IN LANGCHAIN
-----------------------------------------
-
-1. Vector Store Retriever (Most Common)
-   - Works with FAISS, Chroma, Pinecone, etc.
-   - Uses similarity search.
-
-Example:
+```python
+# Default retriever (k=4)
 retriever = vectorstore.as_retriever()
-docs = retriever.get_relevant_documents("What is RAG?")
 
-Custom K value:
+# Custom k value
 retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
 
+# Retrieve documents
+docs = retriever.invoke("What is RAG?")
+```
 
-2. MultiQuery Retriever
-   - Uses LLM to generate multiple variations of a query.
-   - Improves recall.
+---
 
-Example:
-"What is RAG?"
-Becomes:
-- Explain Retrieval Augmented Generation
-- How does RAG work?
-- Architecture of RAG
+### 2. MMR Retriever (Max Marginal Relevance)
 
+Balances **relevance** and **diversity** in retrieved results. Reduces duplicate similar chunks.
 
-3. Contextual Compression Retriever
-   - Returns only relevant parts of large documents.
-   - Useful when token limit matters.
-
-
-4. Self Query Retriever
-   - Converts natural language into structured filters.
-   Example:
-   "Show research papers after 2022 about LLM"
-   → Applies metadata filter (year > 2022)
-   → Then performs similarity search
-
-
-5. Time-Weighted Retriever
-   - Gives higher priority to recent documents.
-   - Useful for chat memory systems.
-
-
-----------------------------------------
-5) IMPORTANT PARAMETERS
-----------------------------------------
-
-1. k
-Number of documents to retrieve.
-Example:
-search_kwargs={"k": 3}
-
-2. search_type
-Options:
-- similarity
-- mmr (Max Marginal Relevance)
-
-MMR:
-- Reduces duplicate results
-- Increases diversity
-
-Example:
+```python
 retriever = vectorstore.as_retriever(
     search_type="mmr",
     search_kwargs={"k": 5}
 )
+```
 
+> See [MMR Notes](mmr.md) for full details.
 
-----------------------------------------
-6) RETRIEVER VS VECTOR STORE
-----------------------------------------
+---
 
-Vector Store:
-- Stores embeddings
-- Database layer
-- Examples: FAISS, Chroma
+### 3. MultiQuery Retriever
 
-Retriever:
-- Searches embeddings
-- Interface over vector store
-- Returns relevant documents
+Uses an LLM to generate **multiple variations** of the query, improving recall.
 
-Retriever = Wrapper over Vector Store
+```
+Original: "What is RAG?"
+Generated:
+  → "Explain Retrieval Augmented Generation"
+  → "How does RAG work?"
+  → "Architecture of RAG systems"
+```
 
+> See [MultiQuery Retriever Notes](MultiQuery_Retriever_Notes.md) for full details.
 
-----------------------------------------
-7) RETRIEVER IN LCEL (RUNNABLES)
-----------------------------------------
+---
 
-Modern LangChain usage:
+### 4. Contextual Compression Retriever
+
+Compresses retrieved documents using an LLM to return only the query-relevant parts.
+
+> See [Contextual Compression Retriever Notes](Contextual_Compression_Retriever_Notes.md) for full details.
+
+---
+
+### 5. Self Query Retriever
+
+Converts natural language into **structured metadata filters**.
+
+```
+Query: "Show research papers after 2022 about LLM"
+→ Applies: year > 2022 AND topic = "LLM"
+→ Then performs similarity search on filtered set
+```
+
+---
+
+### 6. Time-Weighted Retriever
+
+Gives higher priority to **recent documents**. Useful for chat memory systems.
+
+---
+
+### Retriever Type Comparison
+
+| Retriever | Purpose | Extra LLM Call? |
+|-----------|---------|----------------|
+| Vector Store | Basic similarity | ❌ |
+| MMR | Relevance + diversity | ❌ |
+| MultiQuery | Improve recall | ✅ |
+| Contextual Compression | Improve precision | ✅ |
+| Self Query | Metadata filtering | ✅ |
+| Time-Weighted | Recent docs priority | ❌ |
+
+---
+
+## Important Parameters
+
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| `k` | Number of documents to retrieve | `search_kwargs={"k": 5}` |
+| `search_type` | Algorithm: `"similarity"` or `"mmr"` | `search_type="mmr"` |
+
+**MMR** should be used when:
+- Retrieved results are too similar to each other
+- You need more diverse coverage
+
+---
+
+## Retriever vs Vector Store
+
+| | Vector Store | Retriever |
+|-|-------------|-----------|
+| Role | Database layer | Interface layer |
+| What it stores | Embeddings | — |
+| What it does | Stores and organizes | Searches and returns |
+| Examples | FAISS, Chroma | `as_retriever()`, MMR, MultiQuery |
+| Relationship | — | Wrapper over vector store |
+
+> **Retriever = Abstraction layer over a Vector Store**
+
+---
+
+## Retriever in LCEL
+
+In modern LangChain, retrievers integrate directly into chains:
+
+```python
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
 
 chain = (
-    retriever
-    | format_docs
+    {"context": retriever | format_docs, "question": RunnablePassthrough()}
     | prompt
     | llm
+    | StrOutputParser()
 )
 
-Retriever becomes part of the chain directly.
+result = chain.invoke("What is RAG?")
+```
 
+> See [Runnables (LCEL)](../../Runnables/Runnables.md) for more on building chains.
 
-----------------------------------------
-8) WHY RETRIEVER IS IMPORTANT?
-----------------------------------------
+---
 
-Benefits:
-- Improves factual accuracy
-- Reduces hallucination
-- Makes LLM domain-specific
-- Provides grounded answers
+## Why Retrievers Are Important
 
+| Without Retriever | With Retriever |
+|-------------------|---------------|
+| LLM guesses | LLM gives grounded answers |
+| Limited to training data | Access to external knowledge |
+| Higher hallucination risk | Reduced hallucination |
+| Domain-agnostic | Domain-specific intelligence |
 
-----------------------------------------
-FINAL DEFINITION
-----------------------------------------
+---
 
-Retriever is a component in LangChain that finds the most relevant documents from a knowledge base using similarity search and passes them to the LLM for answer generation.
+## Common Interview Questions
 
-========================================
-END OF NOTES
-========================================
-
-
-
-
-=========================================================
-RETRIEVER IN LANGCHAIN – INTERVIEW FOCUSED NOTES
-=========================================================
-
-
-1) WHAT IS A RETRIEVER?
-
-A Retriever in LangChain is a component that:
-- Takes a user query
-- Searches a knowledge base (vector store)
-- Returns the most relevant documents
-
-Important:
-Retriever does NOT generate answers.
-It only retrieves documents.
-
-In RAG:
-Retriever = Search Component
-LLM = Answer Generation Component
-
-
----------------------------------------------------------
-2) HOW RETRIEVER WORKS INTERNALLY
----------------------------------------------------------
-
-Step 1: Convert query into embedding vector
-Step 2: Compare query vector with document vectors
-Step 3: Use similarity metric (cosine similarity, dot product)
-Step 4: Return top K similar documents
-
-Mathematically (Cosine Similarity):
-
-similarity(A, B) = (A · B) / (||A|| ||B||)
-
-Higher value → more similar documents
-
-
----------------------------------------------------------
-3) RETRIEVER IN RAG ARCHITECTURE (IMPORTANT QUESTION)
----------------------------------------------------------
-
-Pipeline:
-
-User Query
-   ↓
-Embedding Model
-   ↓
-Retriever (Vector Search)
-   ↓
-Top K Documents
-   ↓
-LLM
-   ↓
-Final Answer
-
-Key Point:
-Retriever grounds the LLM with external knowledge.
-
-
----------------------------------------------------------
-4) DIFFERENCE: RETRIEVER vs VECTOR STORE
----------------------------------------------------------
-
-Vector Store:
-- Stores document embeddings
-- Example: FAISS, Chroma, Pinecone
-- Database layer
-
-Retriever:
-- Interface over vector store
-- Performs search
-- Returns relevant docs
-
-Interview Tip:
-Retriever is an abstraction layer over vector stores.
-
-
----------------------------------------------------------
-5) IMPORTANT RETRIEVER TYPES (VERY COMMON INTERVIEW QUESTION)
----------------------------------------------------------
-
-1) Vector Store Retriever
-   - Basic similarity search
-
-2) MMR Retriever (Max Marginal Relevance)
-   - Balances relevance + diversity
-   - Reduces duplicate similar results
-
-3) MultiQuery Retriever
-   - Uses LLM to generate multiple query variations
-   - Improves recall
-
-4) SelfQuery Retriever
-   - Converts natural language into metadata filters
-   - Example:
-     "Research papers after 2022"
-     → year > 2022 filter
-
-5) Contextual Compression Retriever
-   - Compresses large documents
-   - Returns only relevant chunks
-
-
----------------------------------------------------------
-6) KEY PARAMETERS (INTERVIEW READY)
----------------------------------------------------------
-
-k:
-- Number of documents retrieved
-
-search_type:
-- "similarity"
-- "mmr"
-
-MMR is used when:
-- Results are too similar
-- Need diversity in retrieval
-
-
----------------------------------------------------------
-7) WHY RETRIEVER IS IMPORTANT?
----------------------------------------------------------
-
-Without Retriever:
-- LLM hallucinates
-- Limited to training data
-
-With Retriever:
-- Grounded responses
-- Access to external data
-- Domain-specific intelligence
-- Reduced hallucination
-
-
----------------------------------------------------------
-8) COMMON INTERVIEW QUESTIONS + SHORT ANSWERS
----------------------------------------------------------
-
-Q1: What is a Retriever?
+**Q1: What is a Retriever?**  
 A: A component that fetches relevant documents based on semantic similarity.
 
-Q2: How does Retriever reduce hallucination?
-A: It provides external context to the LLM.
+**Q2: How does Retriever reduce hallucination?**  
+A: It provides external context to the LLM, grounding responses in actual documents.
 
-Q3: What similarity metric is used?
+**Q3: What similarity metric is used?**  
 A: Cosine similarity, dot product, or Euclidean distance.
 
-Q4: What is MMR?
-A: Max Marginal Relevance – balances relevance and diversity.
+**Q4: What is MMR?**  
+A: Max Marginal Relevance — balances relevance and diversity in retrieved documents.
 
-Q5: Difference between MultiQuery and SelfQuery?
-A:
-- MultiQuery → generates multiple semantic queries
-- SelfQuery → applies metadata filtering
+**Q5: Difference between MultiQuery and SelfQuery?**  
+A: MultiQuery generates multiple semantic queries to improve recall. SelfQuery applies metadata filtering for more precise retrieval.
 
-Q6: Where is Retriever used?
-A: In RAG systems.
+**Q6: Where is Retriever used?**  
+A: In RAG (Retrieval-Augmented Generation) systems.
 
+---
 
----------------------------------------------------------
-9) ONE-LINE INTERVIEW DEFINITION
----------------------------------------------------------
-
-A Retriever in LangChain is a component that performs semantic search over embedded documents and returns the most relevant chunks to the LLM for grounded answer generation.
-
-=========================================================
-END OF INTERVIEW NOTES
-=========================================================
+> **Interview definition:** A Retriever in LangChain is a component that performs semantic search over embedded documents and returns the most relevant chunks to the LLM for grounded answer generation.

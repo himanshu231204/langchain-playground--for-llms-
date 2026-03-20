@@ -1,206 +1,203 @@
-==============================
-TEXT SPLITTER – LANGCHAIN
-==============================
+# ✂️ Text Splitter – LangChain Notes
 
-1) What is Text Splitter?
---------------------------
-Text Spliter breaks large documents into smaller chunks 
-before sending them to embeddings or LLM.
+> Notes on text splitting strategies for preparing documents for embedding and retrieval in RAG pipelines.
 
-Why needed?
-- LLM has token limit
-- Better embedding quality
-- Better retrieval in RAG
-- Prevent context loss
+## Table of Contents
 
+- [What is a Text Splitter?](#what-is-a-text-splitter)
+- [Role in RAG Pipeline](#role-in-rag-pipeline)
+- [Important Parameters](#important-parameters)
+- [Types of Text Splitters](#types-of-text-splitters)
+- [Chunk Overlap Concept](#chunk-overlap-concept)
+- [Length-Based Splitting](#length-based-splitting)
+- [Choosing Chunk Size](#choosing-chunk-size)
 
-2) Role in RAG Pipeline
---------------------------
+## Related Notes
+
+- [Document Loaders (RAG Notes)](rag_notes.md)
+- [Vector Store Notes](Vectors%20Stores/vector_store_notes.md)
+- [Chroma DB Notes](Vectors%20Stores/chroma_db_notes.md)
+- [Retriever Notes](Retrievers/retriver.md)
+
+---
+
+## What is a Text Splitter?
+
+A **Text Splitter** breaks large documents into smaller **chunks** before sending them to embeddings or the LLM.
+
+**Why it's needed:**
+
+- LLMs have **token limits** — large documents don't fit in one call
+- **Better embedding quality** — smaller chunks embed more precisely
+- **Better retrieval in RAG** — targeted chunks improve relevance
+- **Prevent context loss** — overlapping ensures no information is cut off
+
+---
+
+## Role in RAG Pipeline
+
+```
 Raw Docs → Text Splitter → Chunks → Embeddings → Vector DB → Retriever → LLM
+```
 
+> **Core idea:** Better chunking → Better retrieval → Better RAG performance
 
-3) Important Parameters
---------------------------
-chunk_size     = Size of each chunk
-chunk_overlap  = Overlapping text between chunks
-separator      = Symbol used for splitting
+---
 
+## Important Parameters
 
-4) Types of Text Splitters
-===========================
+| Parameter | Description |
+|-----------|-------------|
+| `chunk_size` | Maximum size of each chunk (characters or tokens) |
+| `chunk_overlap` | Amount of text repeated between adjacent chunks |
+| `separator` | Symbol or pattern used for splitting |
 
-A) CharacterTextSplitter
---------------------------
-- Splits based on character count
-- Simple and basic
-- May cut sentences randomly
+---
 
-Best for:
-- Small or simple text
+## Types of Text Splitters
 
+### A) CharacterTextSplitter
 
-B) RecursiveCharacterTextSplitter (Most Recommended)
------------------------------------------------------
-- Splits hierarchically
-- Order:
-    "\n\n" → "\n" → " " → ""
-- Maintains meaning better
+Splits based on **character count**. Simple and basic — may cut sentences randomly.
 
-Best for:
-- RAG systems
-- General purpose chunking
+```python
+from langchain.text_splitter import CharacterTextSplitter
 
+splitter = CharacterTextSplitter(
+    chunk_size=500,
+    chunk_overlap=100
+)
+chunks = splitter.split_documents(documents)
+```
 
-C) TokenTextSplitter
------------------------
-- Splits based on tokens (not characters)
-- Good when strict token limit is required
+**Best for:** Small or simple text
 
-Best for:
-- OpenAI or token-based models
+---
 
+### B) RecursiveCharacterTextSplitter ⭐ (Most Recommended)
 
-D) MarkdownHeaderTextSplitter
---------------------------------
-- Splits using markdown headers
-- Keeps structure intact
+Splits **hierarchically**, trying separators in order: `"\n\n"` → `"\n"` → `" "` → `""`. Maintains semantic meaning better.
 
-Best for:
-- README files
-- Technical docs
+```python
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=500,
+    chunk_overlap=100
+)
+chunks = splitter.split_documents(documents)
+```
 
-5) Chunk Overlap Concept
---------------------------
-Example:
+**Best for:** RAG systems, general-purpose chunking
+
+---
+
+### C) TokenTextSplitter
+
+Splits based on **token count** (not characters). Good when strict token limits are required.
+
+```python
+from langchain.text_splitter import TokenTextSplitter
+
+splitter = TokenTextSplitter(
+    chunk_size=500,
+    chunk_overlap=50
+)
+```
+
+**Best for:** OpenAI or token-based models
+
+---
+
+### D) MarkdownHeaderTextSplitter
+
+Splits using **markdown headers**, keeping document structure intact.
+
+```python
+from langchain.text_splitter import MarkdownHeaderTextSplitter
+
+headers_to_split_on = [
+    ("#", "Header 1"),
+    ("##", "Header 2"),
+]
+splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on)
+```
+
+**Best for:** README files, technical documentation
+
+---
+
+### Splitter Comparison
+
+| Splitter | Basis | Preserves Meaning | Use Case |
+|----------|-------|-------------------|---------|
+| `CharacterTextSplitter` | Characters | ❌ | Simple text |
+| `RecursiveCharacterTextSplitter` | Hierarchy | ✅ | RAG (recommended) |
+| `TokenTextSplitter` | Tokens | ⚠️ | Token-limited models |
+| `MarkdownHeaderTextSplitter` | Headers | ✅ | Structured docs |
+
+---
+
+## Chunk Overlap Concept
+
+Chunk overlap prevents context from being cut off at chunk boundaries:
+
+```
 chunk_size = 500
 chunk_overlap = 100
 
-Chunk1 → 0–500
-Chunk2 → 400–900
+Chunk 1 → characters  0–500
+Chunk 2 → characters  400–900   (100-char overlap with Chunk 1)
+Chunk 3 → characters  800–1300  (100-char overlap with Chunk 2)
+```
 
-Why overlap?
-- Prevent context break
-- Improve retrieval continuity
+**Why overlap matters:**
+- Prevents context break at boundaries
+- Improves retrieval continuity
+- Ensures related sentences stay accessible
 
+---
 
-6) Choosing Chunk Size
---------------------------
-Small models → 300–500 tokens
-Large models → 500–1000 tokens
-More overlap → Better retrieval but more storage
+## Length-Based Splitting
 
+Length-based splitting splits text purely based on size (character count or token count), without considering meaning or structure.
 
-7) Key Interview Points
---------------------------
+### Character-Based
+
+```python
+from langchain.text_splitter import CharacterTextSplitter
+
+splitter = CharacterTextSplitter(
+    chunk_size=100,
+    chunk_overlap=20,
+    separator="\n"
+)
+```
+
+| Advantage | Disadvantage |
+|-----------|-------------|
+| Simple to implement | Ignores semantic meaning |
+| Easy to control size | May break sentences |
+| Good for strict limits | Not ideal for structured docs |
+
+### Token-Based
+
+More accurate for LLM token limits, using the model's actual tokenizer.
+
+---
+
+## Choosing Chunk Size
+
+| Model Size | Recommended Chunk Size |
+|------------|----------------------|
+| Small models | 300–500 tokens |
+| Large models | 500–1000 tokens |
+
+**General rule:** More overlap → Better retrieval, but more storage usage.
+
+### Key Interview Points
+
 - Chunking affects retrieval quality
-- Recursive splitter is most used
-- Overlap prevents information loss
-- Token splitting is useful for strict limits
-
-
-==============================
-CORE IDEA:
-Better chunking → Better retrieval → Better RAG performance
-==============================
-
-
-========================================
-LENGTH-BASED TEXT SPLITTING – LANGCHAIN
-========================================
-
-1) What is Length-Based Text Splitting?
-----------------------------------------
-It splits text based on fixed size 
-(length = characters or tokens).
-
-It does NOT consider meaning or structure.
-It only checks size.
-
-Example:
-If chunk_size = 500
-Text will be divided every 500 characters.
-
-
-2) Why Use Length-Based Splitting?
-----------------------------------------
-- Control LLM token limit
-- Simple and fast
-- Useful for quick testing
-- Works when structure is not important
-
-
-3) Types of Length-Based Splitters
-====================================
-
-A) Character-Based Splitting
---------------------------------
-Splitter: CharacterTextSplitter
-
-- Splits based on character count
-- Uses chunk_size and chunk_overlap
-
-Important Parameters:
-- chunk_size
-- chunk_overlap
-- separator
-
-Problem:
-- Can break sentences in middle
-
-
-B) Token-Based Splitting
----------------------------
-Splitter: TokenTextSplitter
-
-- Splits based on token count
-- Better for OpenAI models
-- More accurate for LLM limits
-
-
-4) Important Parameters
---------------------------------
-chunk_size:
-    Maximum size of each chunk
-
-chunk_overlap:
-    Repeated text between chunks
-    Prevents context loss
-
-
-5) Example Concept
---------------------------------
-chunk_size = 100
-chunk_overlap = 20
-
-Chunk1 → 0–100
-Chunk2 → 80–180
-Chunk3 → 160–260
-
-
-6) Advantages
---------------------------------
-✔ Simple to implement
-✔ Easy to control size
-✔ Good for strict limits
-
-
-7) Disadvantages
---------------------------------
-✘ Ignores semantic meaning
-✘ May break sentences
-✘ Not ideal for structured docs
-
-
-8) When to Use?
---------------------------------
-- Quick prototype
-- Non-structured text
-- Strict token control needed
-
-
-========================================
-CORE IDEA:
-Length-Based Splitting = Fixed Size Splitting
-Focus is on SIZE, not meaning.
-========================================
+- `RecursiveCharacterTextSplitter` is the most commonly used
+- Overlap prevents information loss at chunk boundaries
+- Token splitting is useful for models with strict context limits

@@ -1,3 +1,19 @@
+# 📄 Sample Data – Artificial Intelligence Overview
+
+> This file contains sample text used for testing Document Loaders, Text Splitters, Embeddings, and RAG pipelines in this repository.
+>
+> **Usage:** Load this file with `TextLoader` or use it as a reference document in vector store experiments.
+
+## Related
+
+- [RAG Components & Document Loaders](Rag%20Components/rag_notes.md)
+- [Text Splitter Notes](Rag%20Components/text_splitter_langchain_notes.md)
+- [Vector Store Notes](Rag%20Components/Vectors%20Stores/vector_store_notes.md)
+
+---
+
+## Content
+
 Artificial Intelligence is a branch of computer science.
 It focuses on building machines that can perform tasks that normally require human intelligence.
 These tasks include learning, reasoning, problem solving, perception, and decision making.

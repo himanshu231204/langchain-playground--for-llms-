@@ -1,141 +1,174 @@
-==================================================
-Contextual Compression Retriever – LangChain Notes
-==================================================
+# 🗜️ Contextual Compression Retriever – Notes
 
-1. What is Contextual Compression Retriever?
+> Notes on the Contextual Compression Retriever — improves RAG precision by filtering out irrelevant content before passing documents to the LLM.
 
-Contextual Compression Retriever is an advanced retriever
-that compresses retrieved documents using an LLM
-and keeps only the parts relevant to the user query.
+## Table of Contents
 
-It improves precision in RAG systems.
+- [What is Contextual Compression Retriever?](#what-is-contextual-compression-retriever)
+- [Why Do We Need It?](#why-do-we-need-it)
+- [How It Works](#how-it-works)
+- [Internal Flow](#internal-flow)
+- [Key Components](#key-components)
+- [Usage in LangChain](#usage-in-langchain)
+- [Example](#example)
+- [Benefits and Drawbacks](#benefits-and-drawbacks)
+- [Comparison with Other Retrievers](#comparison-with-other-retrievers)
+- [When to Use It](#when-to-use-it)
 
---------------------------------------------------
+## Related Notes
 
-2. Why Do We Need It?
+- [Retriever Notes](retriver.md)
+- [MMR Retriever](mmr.md)
+- [MultiQuery Retriever](MultiQuery_Retriever_Notes.md)
+- [Vector Store Notes](../Vectors%20Stores/vector_store_notes.md)
+- [Chroma DB Notes](../Vectors%20Stores/chroma_db_notes.md)
 
-Problem with normal retrieval:
-- Retrieved documents may be long.
-- Irrelevant information is passed to LLM.
-- Context window gets wasted.
-- Response quality may decrease.
+---
 
-Solution:
-Compress documents before sending to final LLM.
+## What is Contextual Compression Retriever?
 
---------------------------------------------------
+`ContextualCompressionRetriever` is an advanced retriever that **compresses retrieved documents using an LLM** and keeps only the parts relevant to the user query.
 
-3. How It Works
+It improves **precision** in RAG systems.
 
-Step 1: Retrieve top-k documents using base retriever.
-Step 2: Pass each document to an LLM compressor.
-Step 3: Extract only query-relevant sentences.
-Step 4: Return compressed documents.
+> **Interview definition:** Contextual Compression Retriever enhances RAG systems by compressing retrieved documents using an LLM to retain only query-relevant content before passing it to the final language model.
 
---------------------------------------------------
+---
 
-4. Important Components
+## Why Do We Need It?
 
-1) Base Retriever
-   - FAISS / Chroma / Pinecone etc.
-   - Retrieves top-k documents.
+**Problem with normal retrieval:**
 
-2) Compressor
-   - LLM-based extractor
-   - Filters irrelevant content.
+- Retrieved documents may be **long**
+- They contain **irrelevant information**
+- The **context window gets wasted** on noise
+- Response quality may decrease
 
-3) ContextualCompressionRetriever
-   - Combines retriever + compressor.
+**Solution:** Compress documents before sending to the final LLM.
 
---------------------------------------------------
+---
 
-5. Internal Flow
+## How It Works
 
+```
+Step 1: Retrieve top-K documents using base retriever
+Step 2: Pass each document to an LLM compressor
+Step 3: LLM extracts only query-relevant sentences
+Step 4: Return compressed, focused documents to the LLM
+```
+
+---
+
+## Internal Flow
+
+```
 User Query
-    ↓
-Vector Retriever (Top-k Docs)
-    ↓
+    │
+    ▼
+Base Retriever (Vector Search → Top-K Docs)
+    │
+    ▼
 LLM-based Compressor
-    ↓
-Filtered / Compressed Docs
-    ↓
-Final LLM
+    │
+    ▼
+Filtered / Compressed Documents
+    │
+    ▼
+Final LLM → Answer
+```
 
---------------------------------------------------
+---
 
-6. Example
+## Key Components
 
-Original Retrieved Document:
+| Component | Role |
+|-----------|------|
+| **Base Retriever** | FAISS / Chroma / Pinecone — retrieves top-K raw documents |
+| **Compressor** | LLM-based extractor — filters out irrelevant content |
+| `ContextualCompressionRetriever` | Combines base retriever + compressor |
 
+---
+
+## Usage in LangChain
+
+```python
+from langchain.retrievers import ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import LLMChainExtractor
+from langchain_ollama import ChatOllama
+
+llm = ChatOllama(model="llama3")
+
+# Create the compressor
+compressor = LLMChainExtractor.from_llm(llm)
+
+# Wrap your base retriever
+compression_retriever = ContextualCompressionRetriever(
+    base_compressor=compressor,
+    base_retriever=vectorstore.as_retriever()
+)
+
+docs = compression_retriever.invoke("What are the health benefits of walking?")
+```
+
+---
+
+## Example
+
+**Original retrieved document:**
+
+```text
 "Walking improves heart health.
-Walking shoes are important.
-It reduces stress.
-Many people walk in parks."
+Walking shoes are important for comfort.
+It reduces stress and anxiety.
+Many people walk in parks during weekends."
+```
 
-Query:
-"What are the health benefits of walking?"
+**Query:** `"What are the health benefits of walking?"`
 
-Compressed Output:
+**Compressed output:**
 
+```text
 "Walking improves heart health and reduces stress."
+```
 
---------------------------------------------------
+The irrelevant sentences about shoes and parks are removed.
 
-7. Key Benefits
+---
 
-✔ Reduces token usage
-✔ Removes irrelevant information
-✔ Improves answer precision
-✔ Better for long documents
-✔ Production-ready technique
+## Benefits and Drawbacks
 
---------------------------------------------------
+### Benefits
 
-8. Drawbacks
+- ✅ **Reduces token usage** — sends only relevant content to LLM
+- ✅ **Removes irrelevant information** — cleaner context
+- ✅ **Improves answer precision** — LLM focuses on what matters
+- ✅ **Better for long documents**
+- ✅ **Production-ready technique**
 
-❌ Extra LLM call (slower)
-❌ Slightly higher cost
-❌ Not needed for small documents
+### Drawbacks
 
---------------------------------------------------
+- ❌ **Extra LLM call** — slower than basic retrieval
+- ❌ **Slightly higher cost**
+- ❌ Not necessary for short, focused documents
 
-9. Comparison with Other Retrievers
+---
 
-MMR:
-- Improves diversity
-- Reduces redundancy
-- Does NOT compress content
+## Comparison with Other Retrievers
 
-MultiQuery:
-- Expands query variations
-- Improves recall
-- Does NOT remove irrelevant text
+| Retriever | What it improves | Mechanism |
+|-----------|-----------------|-----------|
+| **MMR** | Diversity of results | Penalizes similar docs |
+| **MultiQuery** | Recall (finding more) | Generates multiple query variants |
+| **Contextual Compression** | Precision (removing noise) | LLM compresses each retrieved doc |
 
-Contextual Compression:
-- Improves precision
-- Removes irrelevant text
-- Uses LLM to filter content
+---
 
---------------------------------------------------
+## When to Use It
 
-10. When To Use?
+Use Contextual Compression when:
 
-Use when:
-- Documents are long
-- Context window limited
-- High precision required
-- Production RAG system
-
---------------------------------------------------
-
-11. Interview Definition
-
-Contextual Compression Retriever enhances
-RAG systems by compressing retrieved documents
-using an LLM to retain only query-relevant content
-before passing it to the final language model.
-
---------------------------------------------------
-
-END
-==================================================
+- ✅ Retrieved documents are **long**
+- ✅ Context window is **limited**
+- ✅ **High precision** is required
+- ✅ Building a **production RAG system**
+- ✅ Documents contain lots of noise around relevant answers

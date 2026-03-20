@@ -1,4 +1,4 @@
-# LangChain Playground for LLMs
+# 🦜 LangChain Playground for LLMs
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![LangChain](https://img.shields.io/badge/LangChain-v1.0.3-green)
@@ -15,6 +15,7 @@ A hands-on learning repository covering **LangChain**, **Generative AI**, and **
 - [Overview](#overview)
 - [Learning Roadmap](#learning-roadmap)
 - [Repository Structure](#repository-structure)
+- [Notes Index](#notes-index)
 - [Getting Started](#getting-started)
 - [Local LLM Support (Ollama)](#local-llm-support-ollama)
 - [Security](#security)
@@ -76,14 +77,98 @@ langchain-playground--for-llms-/
 ├── Sample Data/              # Reference PDFs for RAG examples
 ├── Structured Output/        # JSON schema, Pydantic, and TypedDict outputs
 ├── Tools/                    # Custom and built-in tool calling, agent toolkits
-├── notes.txt                 # Core LangChain concept notes
+├── notes.md                  # Core LangChain concept notes (Chat Models, Prompts, Messages)
 ├── requirements.txt          # Python dependencies
 ├── test.py                   # Quick-start test script
 ├── sample.pdf                # Sample document for loader testing
-├── sample_data.txt           # Sample text data
+├── sample_data.md            # Sample text data for RAG testing
 ├── Titanic-Dataset.csv       # Sample dataset for data-loading examples
 └── README.MD
 ```
+
+---
+
+## Notes Index
+
+All concept notes are organized by topic. Click any link to jump directly to the notes.
+
+### 🧠 Foundations
+
+| Topic | Notes File |
+|-------|-----------|
+| Chat Models, Prompts & Messages | [notes.md](notes.md) |
+| Chat History | [Messages/chat_history.md](Messages/chat_history.md) |
+
+---
+
+### ⛓️ Chains
+
+| Topic | Notes File |
+|-------|-----------|
+| Simple & Sequential Chains | [Chain/chain.md](Chain/chain.md) |
+| Parallel Chain | [Chain/parallel_chain.md](Chain/parallel_chain.md) |
+| Conditional Chain (IF/ELSE routing) | [Chain/conditional_Chain.md](Chain/conditional_Chain.md) |
+
+---
+
+### 🔄 Runnables (LCEL)
+
+| Topic | Notes File |
+|-------|-----------|
+| Runnables, LCEL, Primitive vs Task-Specific | [Runnables/Runnables.md](Runnables/Runnables.md) |
+
+---
+
+### 📤 Output Parsers & Structured Output
+
+| Topic | Notes File |
+|-------|-----------|
+| Output Parsers Overview & Ollama | [Output_Parsers/notes1.md](Output_Parsers/notes1.md) |
+| String Output Parser | [Output_Parsers/stringoutputParser.md](Output_Parsers/stringoutputParser.md) |
+| JSON Output Parser | [Output_Parsers/jsonoutput_parser.md](Output_Parsers/jsonoutput_parser.md) |
+| Pydantic Output Parser | [Output_Parsers/PydanticOutputParser.md](Output_Parsers/PydanticOutputParser.md) |
+| Structured Output Parser (legacy) | [Output_Parsers/Structured Output Parser.md](Output_Parsers/Structured%20Output%20Parser.md) |
+| TypedDict vs Pydantic vs JSON Schema | [Structured Output/structured.md](Structured%20Output/structured.md) |
+
+---
+
+### 📚 RAG Components
+
+| Topic | Notes File |
+|-------|-----------|
+| Document Loaders (PDF, Web, CSV, Directory) | [Rag Components/rag_notes.md](Rag%20Components/rag_notes.md) |
+| Text Splitters | [Rag Components/text_splitter_langchain_notes.md](Rag%20Components/text_splitter_langchain_notes.md) |
+| Vector Stores Overview | [Rag Components/Vectors Stores/vector_store_notes.md](Rag%20Components/Vectors%20Stores/vector_store_notes.md) |
+| Chroma DB | [Rag Components/Vectors Stores/chroma_db_notes.md](Rag%20Components/Vectors%20Stores/chroma_db_notes.md) |
+| Chroma Internal Architecture | [Rag Components/Vectors Stores/chroma_internal_architecture.md](Rag%20Components/Vectors%20Stores/chroma_internal_architecture.md) |
+| FAISS vs Chroma vs Pinecone Comparison | [Rag Components/Vectors Stores/vector_db_architecture_comparison.md](Rag%20Components/Vectors%20Stores/vector_db_architecture_comparison.md) |
+| Retrievers Overview | [Rag Components/Retrievers/retriver.md](Rag%20Components/Retrievers/retriver.md) |
+| MMR Retriever | [Rag Components/Retrievers/mmr.md](Rag%20Components/Retrievers/mmr.md) |
+| MultiQuery Retriever | [Rag Components/Retrievers/MultiQuery_Retriever_Notes.md](Rag%20Components/Retrievers/MultiQuery_Retriever_Notes.md) |
+| Contextual Compression Retriever | [Rag Components/Retrievers/Contextual_Compression_Retriever_Notes.md](Rag%20Components/Retrievers/Contextual_Compression_Retriever_Notes.md) |
+
+---
+
+### 🔧 Tools & Agents
+
+| Topic | Notes File |
+|-------|-----------|
+| Tools Overview | [Tools/tools.md](Tools/tools.md) |
+| Tool Binding | [Tools/tool_binding.md](Tools/tool_binding.md) |
+| Tool Calling | [Tools/tools_calling .md](Tools/tools_calling%20.md) |
+| Custom Tools | [Tools/custom_tools.md](Tools/custom_tools.md) |
+| Toolkits | [Tools/toolkit.md](Tools/toolkit.md) |
+| AI Agents (ReAct Pattern) | [Mini_projects/agent_notes.md](Mini_projects/agent_notes.md) |
+
+---
+
+### 📄 Sample Data
+
+| File | Description |
+|------|-------------|
+| [sample_data.md](sample_data.md) | AI overview text for RAG testing |
+| [sample.pdf](sample.pdf) | Sample PDF for document loader testing |
+| [Titanic-Dataset.csv](Titanic-Dataset.csv) | Sample CSV for data loading examples |
 
 ---
 
@@ -151,7 +236,7 @@ response = llm.invoke("Explain Retrieval Augmented Generation in simple words")
 print(response.content)
 ```
 
-Benefits of local inference:
+**Benefits of local inference:**
 
 - No API costs
 - Full data privacy
