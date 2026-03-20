@@ -1,142 +1,132 @@
-🧠 Chat Model Params (Gemini)
+# 🧠 LangChain Core Concepts – Notes
 
-temperature: controls creativity (0 = factual, 1+ = creative).
+> Core reference notes covering Chat Models, Prompts, and Chat Messages in LangChain.
 
-max_completion_tokens: limits output length (# of tokens).
-✅ Low temp = accurate; High temp = imaginative.
-✅ More tokens = longer reply.
+## Table of Contents
 
-------------------------------------------------------------------
+- [Chat Model Parameters](#chat-model-parameters)
+- [Prompts in LangChain](#prompts-in-langchain)
+- [Chat Message Types](#chat-message-types)
+- [ChatPromptTemplate](#chatprompttemplate)
+- [Message Placeholders](#message-placeholders)
 
-🧠 Prompts in LangChain
+## Related Notes
 
-Prompts = Input instructions given to LLMs.
+- [Chat History](Messages/chat_history.md)
+- [Chains Overview](Chain/chain.md)
+- [Runnables (LCEL)](Runnables/Runnables.md)
+- [Output Parsers](Output_Parsers/notes1.md)
 
-Define what and how the model should respond.
+---
 
-Can be static or dynamic.
+## Chat Model Parameters
 
-📘 Static Prompts
+### Gemini (and other LLMs)
 
-Fixed, unchanging text.
+| Parameter | Description |
+|-----------|-------------|
+| `temperature` | Controls creativity: `0` = factual, `1+` = creative |
+| `max_completion_tokens` | Limits output length (number of tokens) |
 
-Example: "Explain photosynthesis in simple terms."
+- ✅ Low temperature → accurate and deterministic responses  
+- ✅ High temperature → imaginative and varied responses  
+- ✅ More tokens → longer replies  
 
-✅ Simple, consistent.
+---
 
-❌ Not flexible for user input.
+## Prompts in LangChain
 
-⚙️ Dynamic Prompts
+**Prompts** are input instructions given to LLMs. They define what the model should respond to and how.
+
+Prompts can be **static** or **dynamic**.
+
+### 📘 Static Prompts
+
+Fixed, unchanging text sent to the model.
+
+```text
+"Explain photosynthesis in simple terms."
+```
+
+- ✅ Simple and consistent  
+- ❌ Not flexible for user input  
+
+### ⚙️ Dynamic Prompts
 
 Use placeholders filled at runtime.
 
-Example: "Explain {topic} in simple terms."
+```text
+"Explain {topic} in simple terms."
+```
 
-✅ Flexible, reusable.
+- ✅ Flexible and reusable  
+- ❌ Requires correct variable formatting  
 
-❌ Requires correct variable formatting.
+### 🧩 Usage in LangChain
 
-🧩 Use in LangChain
+- Managed with `PromptTemplate` or `ChatPromptTemplate`
+- Often used in [chains](Chain/chain.md) or retrieval ([RAG](Rag%20Components/rag_notes.md)) setups
+- Supports combining system (static) + user (dynamic) prompts
 
-Managed with PromptTemplate or ChatPromptTemplate.
+---
 
-Often used in chains or retrieval (RAG) setups.
+## Chat Message Types
 
-Supports combining system (static) + user (dynamic) prompts.
+In a chat-based AI system (like Gemini or OpenAI), every message belongs to one of three main types.
 
+| Message Type | Represents | Purpose | Example |
+|--------------|------------|---------|---------|
+| `SystemMessage` | AI setup / role | Defines behavior | `"You are a helpful assistant."` |
+| `HumanMessage` | User input | Captures query | `"Explain AIMessage."` |
+| `AIMessage` | Model output | Returns response | `"AIMessage stores model replies."` |
 
+### 1️⃣ SystemMessage
 
-==============================================>>>>
+Defines the role, behavior, or context of the AI — like an instruction manual before the conversation starts.
 
-🧩 CHAT MESSAGE TYPES IN LANGCHAIN / GENAI
-------------------------------------------
-
-In a chat-based AI system (like Gemini or OpenAI models),
-every message in the conversation belongs to one of three main types.
-
-
-1️⃣ SYSTEMMESSAGE
------------------
-Purpose: Defines the role, behavior, or context of the AI.
-Think of it as: The instruction manual for the model before conversation starts.
-
-Example:
+```python
 SystemMessage(content="You are a helpful AI assistant.")
+```
 
-Used for:
-- Setting tone or role (teacher, coder, etc.)
-- Controlling the style of responses
-- Maintaining consistent behavior
+Used for setting tone, controlling response style, and maintaining consistent behavior.
 
+### 2️⃣ HumanMessage
 
-2️⃣ HUMANMESSAGE
-----------------
-Purpose: Represents what the user inputs during the chat.
-Think of it as: The prompt or question coming from the user.
+Represents what the user inputs during the chat.
 
-Example:
+```python
 HumanMessage(content="Explain how chat history works in GenAI.")
+```
 
-Used for:
-- Capturing user queries
-- Passing new instructions to the AI
+### 3️⃣ AIMessage
 
+Stores the model's reply, appended to the conversation for context continuity.
 
-3️⃣ AIMESSAGE
---------------
-Purpose: Stores the model’s reply or output.
-Think of it as: The AI’s response that gets appended to the conversation.
-
-Example:
+```python
 AIMessage(content="Chat history helps the model remember previous context...")
+```
 
-Used for:
-- Maintaining response history
-- Displaying output in chat UI
-- Feeding back into model for context continuity
+### 🔁 How They Work Together
 
-
-🔁 HOW THEY WORK TOGETHER
--------------------------
-The conversation is stored as a list of messages:
-
+```python
 chat_history = [
     SystemMessage(content="You are a helpful assistant."),
     HumanMessage(content="Hi!"),
     AIMessage(content="Hello! How can I help you today?")
 ]
+```
 
-Each new user input and AI reply is appended to this list,
-allowing the model to remember previous context across turns.
+Each new user input and AI reply is appended to this list, allowing the model to remember context across turns.
 
+> See [chat_history.md](Messages/chat_history.md) for a practical example.
 
-⚡ QUICK SUMMARY TABLE
-----------------------
+---
 
-| Message Type   | Represents    | Purpose             | Example                           |
-|----------------|----------------|---------------------|-----------------------------------|
-| SystemMessage  | AI setup/role  | Defines behavior    | "You are a helpful assistant."    |
-| HumanMessage   | User input     | Captures query      | "Explain AIMessage."              |
-| AIMessage      | Model output   | Returns response    | "AIMessage stores model replies." |
+## ChatPromptTemplate
 
-------------------------------------------
-🧠 TIP: Together, these messages make the conversation
-context-aware and help the AI respond more naturally.
-------------------------------------------
+`ChatPromptTemplate` creates **dynamic messages** — reusable templates with placeholders filled automatically at runtime.
 
-
-🎯 WHY CHAT PROMPT TEMPLATE IS USED
------------------------------------
-
-✅ The main purpose of a ChatPromptTemplate is to create **dynamic messages**.
-
-That means — instead of writing a new prompt each time, 
-you can write a reusable template with placeholders 
-(like {name}, {topic}, {question}) that get filled automatically at runtime.
-
------------------------------------
-🧠 EXAMPLE:
-
+```python
 from langchain.prompts import ChatPromptTemplate
 
 prompt = ChatPromptTemplate.from_messages([
@@ -144,54 +134,33 @@ prompt = ChatPromptTemplate.from_messages([
     ("human", "Explain the topic: {topic}")
 ])
 
-# Now you can fill it dynamically:
 messages = prompt.format_messages(topic="Neural Networks")
+```
 
-→ Output:
+**Output:**
+```
 System: "You are a helpful assistant."
-Human: "Explain the topic: Neural Networks"
+Human:  "Explain the topic: Neural Networks"
+```
 
------------------------------------
-⚡ WHY THIS IS IMPORTANT:
+**Why it matters:**
 
-- Makes your chatbot **flexible** and **reusable**
+- Makes your chatbot flexible and reusable
 - Avoids hardcoding text in multiple places
-- Allows easy personalization (like user name, task, topic)
-- Helps integrate with dynamic user inputs or app data
+- Allows easy personalization (name, task, topic)
+- Integrates with dynamic user inputs or app data
 
------------------------------------
-💬 In short:
-ChatPromptTemplate = “Dynamic message generator”
-It creates personalized, structured prompts on the fly before sending them to the model.
------------------------------------
+> `ChatPromptTemplate` = **Dynamic message generator**
 
+---
 
-🧩 MESSAGE PLACEHOLDER
-----------------------
+## Message Placeholders
 
-💡 DEFINITION:
-A *message placeholder* is a variable or placeholder name 
-inside a **Chat Prompt Template** that gets replaced with 
-real data when the prompt is formatted.
+A **message placeholder** is a variable inside a `ChatPromptTemplate` written inside curly braces `{ }`. It gets replaced with real data when the prompt is formatted.
 
-It’s written inside curly braces { }.
+### Example
 
---------------------------------------
-🧠 SIMPLE IDEA:
-
-Think of it like a “fill-in-the-blank” in your message.
-
-Example:
-"You are explaining the topic: {topic}"
-
-Here, {topic} is the placeholder.
-
-When the user provides a topic, 
-the template automatically replaces it.
-
---------------------------------------
-⚙️ EXAMPLE IN CODE:
-
+```python
 from langchain.prompts import ChatPromptTemplate
 
 prompt = ChatPromptTemplate.from_messages([
@@ -199,42 +168,31 @@ prompt = ChatPromptTemplate.from_messages([
     ("human", "Explain the concept of {subject}.")
 ])
 
-# Fill the placeholder dynamically
 messages = prompt.format_messages(subject="Machine Learning")
+```
 
-Output:
+**Output:**
+```
 System: "You are a helpful AI assistant."
-Human: "Explain the concept of Machine Learning."
+Human:  "Explain the concept of Machine Learning."
+```
 
---------------------------------------
-🎯 PURPOSE OF PLACEHOLDERS:
+### Multiple Placeholders
 
-✅ To make prompts **dynamic** (change based on user input)
-✅ To avoid hardcoding multiple similar messages
-✅ To easily reuse one template for different situations
-
---------------------------------------
-⚡ KEY POINTS:
-
-- Placeholders are written as `{variable_name}`
-- They are filled when you call `.format_messages()`
-- You can have multiple placeholders in one template
-  Example: "Hello {name}, explain {topic} briefly."
-
---------------------------------------
-🪄 QUICK EXAMPLE WITH MULTIPLE PLACEHOLDERS:
-
+```python
 prompt = ChatPromptTemplate.from_messages([
     ("system", "You are a helpful tutor."),
     ("human", "Hi {name}, can you explain {concept}?")
 ])
 
 messages = prompt.format_messages(name="Himanshu", concept="AI Chatbots")
+# → Human: "Hi Himanshu, can you explain AI Chatbots?"
+```
 
-→ Human: "Hi Himanshu, can you explain AI Chatbots?"
+**Key points:**
 
---------------------------------------
-💬 SUMMARY:
-Message placeholders = Variables inside templates 
-that make prompts flexible, reusable, and dynamic.
---------------------------------------
+- Placeholders are written as `{variable_name}`
+- Filled when you call `.format_messages()`
+- Multiple placeholders can exist in one template
+
+> **Summary:** Message placeholders = variables inside templates that make prompts flexible, reusable, and dynamic.

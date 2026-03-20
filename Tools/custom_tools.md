@@ -1,207 +1,211 @@
-=========================================
-CUSTOM TOOLS IN LANGCHAIN - COMPLETE NOTES
-=========================================
+# 🛠️ Custom Tools in LangChain – Notes
 
-1) What is a Custom Tool?
+> Notes on creating custom tools — user-defined functions that extend LLM capabilities for application-specific tasks.
 
-A Custom Tool in LangChain is a user-defined function that an LLM (through an Agent)
-can call to perform a specific task.
+## Table of Contents
 
-Unlike built-in tools, custom tools are created by the developer
-to solve application-specific problems.
+- [What is a Custom Tool?](#what-is-a-custom-tool)
+- [Why Do We Need Custom Tools?](#why-do-we-need-custom-tools)
+- [Basic Structure](#basic-structure)
+- [How Custom Tool Works](#how-custom-tool-works)
+- [Methods to Create Custom Tools](#methods-to-create-custom-tools)
+- [Structured Custom Tools](#structured-custom-tools)
+- [Design Guidelines](#design-guidelines)
+- [Security Considerations](#security-considerations)
+- [Custom Tool vs Built-in Tool vs Chain](#custom-tool-vs-built-in-tool-vs-chain)
+- [Real-World Use Cases](#real-world-use-cases)
 
-Definition:
-Custom Tool = A developer-defined function wrapped in a tool interface
-that allows an LLM to perform external actions.
+## Related Notes
 
-------------------------------------------------
+- [Tools Overview](tools.md)
+- [Tool Binding](tool_binding.md)
+- [Tool Calling](tools_calling%20.md)
+- [Toolkits](toolkit.md)
+- [Agent Notes](../Mini_projects/agent_notes.md)
 
-2) Why Do We Need Custom Tools?
+---
 
-Built-in tools are limited.
-Real-world applications require specific logic such as:
+## What is a Custom Tool?
 
-- Calling a private API
-- Querying a custom database
-- Reading internal files
-- Performing business logic
-- Interacting with company systems
-- Triggering automation workflows
+A **Custom Tool** in LangChain is a user-defined function that an LLM (through an Agent) can call to perform a specific task.
 
-Custom tools allow full flexibility.
+> **Definition:** Custom Tool = A developer-defined function wrapped in a tool interface that allows an LLM to perform external actions.
 
-------------------------------------------------
+Unlike built-in tools, custom tools are created by the developer to solve application-specific problems.
 
-3) Basic Structure of a Custom Tool
+---
+
+## Why Do We Need Custom Tools?
+
+Built-in tools are limited. Real-world applications require:
+
+- Calling a **private API**
+- Querying a **custom database**
+- Reading **internal files**
+- Performing **business logic**
+- Interacting with **company systems**
+- Triggering **automation workflows**
+
+Custom tools allow **full flexibility**.
+
+---
+
+## Basic Structure
 
 A custom tool typically includes:
 
-- name → Unique identifier
-- description → Explains when the tool should be used
-- function → The actual Python function logic
+| Part | Description |
+|------|-------------|
+| `name` | Unique identifier for the tool |
+| `description` | Explains when the tool should be used (LLM reads this) |
+| `function` | The actual Python function logic |
 
-Important:
-The description is critical because the LLM reads it
-to decide whether to use the tool.
+> ⚠️ **The description is critical** — the LLM reads it to decide whether to use the tool.
 
-------------------------------------------------
+---
 
-4) How Custom Tool Works (Execution Flow)
+## How Custom Tool Works
 
+```
 User Query
-    ↓
+    │
+    ▼
 Agent analyzes the request
-    ↓
+    │
+    ▼
 If description matches, Agent selects the tool
-    ↓
+    │
+    ▼
 Tool function executes
-    ↓
+    │
+    ▼
 Output returned to LLM
-    ↓
+    │
+    ▼
 LLM generates final answer
+```
 
-------------------------------------------------
+---
 
-5) Methods to Create Custom Tools in LangChain
+## Methods to Create Custom Tools
 
-A) Using @tool decorator
-   - Simple and recommended method
+### A) Using `@tool` Decorator (Recommended)
 
-B) Using Tool class manually
-   - More control over configuration
+The simplest and most Pythonic approach:
 
-C) StructuredTool (for multiple arguments)
-   - Used when function requires structured inputs
+```python
+from langchain_core.tools import tool
 
-------------------------------------------------
+@tool
+def get_weather(city: str) -> str:
+    """Get current weather information for a city.
+    
+    Args:
+        city: The name of the city to get weather for.
+    """
+    # Your actual implementation here
+    return f"The weather in {city} is sunny, 25°C"
+```
 
-6) Simple Example (Conceptual)
+### B) Using `Tool` Class Manually
 
-Suppose we create a custom weather tool.
+More control over configuration:
 
-Function:
-- Takes city name
-- Returns temperature
+```python
+from langchain_core.tools import Tool
 
-Tool Name: get_weather
-Description:
-"Use this tool to get current weather information for a city."
+def get_weather(city: str) -> str:
+    return f"The weather in {city} is sunny, 25°C"
 
-When user asks:
-"What is the weather in Delhi?"
+weather_tool = Tool(
+    name="get_weather",
+    func=get_weather,
+    description="Use this tool to get current weather information for a city."
+)
+```
 
-Agent:
-- Detects weather request
-- Calls get_weather tool
-- Returns result
+### C) `StructuredTool` (for Multiple Arguments)
 
-------------------------------------------------
+Used when function requires structured/multiple inputs:
 
-7) Custom Tool vs Built-in Tool
+```python
+from langchain_core.tools import StructuredTool
+from pydantic import BaseModel
 
-Built-in Tool:
-- Predefined by LangChain
-- Limited to available integrations
+class FlightInput(BaseModel):
+    source_city: str
+    destination_city: str
+    travel_date: str
 
-Custom Tool:
-- Created by developer
-- Unlimited flexibility
-- Can connect to any API or logic
+def search_flights(source_city: str, destination_city: str, travel_date: str) -> str:
+    return f"Found 3 flights from {source_city} to {destination_city} on {travel_date}"
 
-------------------------------------------------
+flight_tool = StructuredTool.from_function(
+    func=search_flights,
+    name="search_flights",
+    description="Search for available flights between cities.",
+    args_schema=FlightInput
+)
+```
 
-8) Custom Tool vs Chain
+---
 
-Chain:
-- Fixed execution steps
-- Predefined workflow
+## Structured Custom Tools
 
-Custom Tool:
-- Dynamically used by Agent
-- Called only when required
+Use `StructuredTool` when a function needs **multiple inputs** with proper schema validation.
 
-Chain = Static logic
-Tool = Dynamic callable capability
+**Example scenario:** A currency conversion tool needs:
+- `from_currency`
+- `to_currency`
+- `amount`
 
-------------------------------------------------
+`StructuredTool` allows the LLM to pass all three arguments correctly.
 
-9) When to Use Custom Tools?
+---
 
-Use custom tools when:
+## Design Guidelines
 
-- You need private API integration
-- You want database access
-- You want business rule execution
-- You need file system operations
-- You want automation triggers
-- You want domain-specific functionality
+- ✅ Keep function logic **clean and modular**
+- ✅ Write **clear and specific** descriptions
+- ✅ Avoid very long descriptions
+- ✅ Handle **exceptions** inside the tool
+- ✅ **Validate input** properly
+- ❌ Avoid dangerous system-level actions
+- ❌ Avoid ambiguous descriptions
 
-------------------------------------------------
+---
 
-10) Structured Custom Tools
+## Security Considerations
 
-If a function needs multiple inputs,
-StructuredTool is used.
+Custom tools can access databases, modify files, execute commands, and trigger external services. Always:
 
-Example:
-Function requires:
-- source_city
-- destination_city
-- travel_date
+- **Validate inputs** before processing
+- **Use authentication** where needed
+- **Restrict sensitive operations**
+- **Prefer sandbox environments** for untrusted inputs
+- **Log tool calls** for auditing
 
-StructuredTool allows proper schema validation.
+---
 
-------------------------------------------------
+## Custom Tool vs Built-in Tool vs Chain
 
-11) Important Design Guidelines
+| | Built-in Tool | Custom Tool | Chain |
+|-|--------------|------------|-------|
+| Created by | LangChain | Developer | Developer |
+| Flexibility | Limited | ✅ Unlimited | Limited to design |
+| Usage pattern | Dynamic (agent-based) | Dynamic (agent-based) | Static (always runs) |
+| Best for | Common tasks | App-specific logic | Fixed workflows |
 
-- Keep function logic clean and modular
-- Write clear and specific descriptions
-- Avoid very long descriptions
-- Handle exceptions inside the tool
-- Validate input properly
-- Avoid dangerous system-level actions
+---
 
-------------------------------------------------
+## Real-World Use Cases
 
-12) Security Considerations
-
-Custom tools can:
-
-- Access databases
-- Modify files
-- Execute commands
-- Trigger external services
-
-So:
-- Always validate inputs
-- Use authentication where needed
-- Restrict sensitive operations
-- Prefer sandbox environments
-
-------------------------------------------------
-
-13) Interview Key Points
-
-- Custom tools extend LLM capability.
-- They are user-defined functions wrapped as tools.
-- Description guides LLM decision-making.
-- Tools are mainly used with Agents.
-- StructuredTool is used for multi-argument functions.
-- Custom tools enable real-world integration.
-
-------------------------------------------------
-
-14) Real-World Use Cases
-
-- Chatbot with internal company database access
-- AI assistant that books tickets
-- Code execution assistant
-- Automated DevOps agent
-- Financial analysis assistant
-- RAG system with custom retrieval logic
-
-------------------------------------------------
-
-END OF NOTES
-=========================================
+| Use Case | Example Tool |
+|----------|-------------|
+| Private API integration | `call_company_api(endpoint, params)` |
+| Database access | `query_user_database(user_id)` |
+| Business logic | `calculate_discount(product_id, user_tier)` |
+| File operations | `read_report_file(filename)` |
+| Automation | `trigger_ci_pipeline(repo, branch)` |
+| Financial analysis | `get_stock_price(ticker)` |
+| RAG retrieval | `search_knowledge_base(query)` |
