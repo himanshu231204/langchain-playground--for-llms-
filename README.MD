@@ -59,7 +59,7 @@ Most LangChain resources are scattered across tutorials, notebooks, and outdated
 - [Tech Stack](#tech-stack)
 - [Security](#security)
 - [Future Enhancements](#future-enhancements)
-- [GitHub Topics](#github-topics)
+- [Topics & Keywords](#topics--keywords)
 - [Contributing](#contributing)
 - [Connect](#connect)
 
@@ -307,18 +307,16 @@ print(response.content)
 
 ---
 
-## GitHub Topics
+## Topics & Keywords
 
-> 📌 **Maintainer note:** Add the following topics in your repository settings (*About → Topics*) to maximize discoverability and stars on GitHub.
+This repository covers the following areas of Generative AI and LLM development:
 
-```
-langchain  llm  generative-ai  rag  retrieval-augmented-generation
-langchain-python  ai-agents  openai  google-gemini  ollama
-vector-database  chromadb  pydantic  lcel  langchain-expression-language
-huggingface  streamlit  python  machine-learning  nlp
-large-language-models  prompt-engineering  ai  deep-learning  chatbot
-langsmith  langgraph  embeddings  transformers  tutorial
-```
+`langchain` `llm` `generative-ai` `rag` `retrieval-augmented-generation`
+`langchain-python` `ai-agents` `openai` `google-gemini` `ollama`
+`vector-database` `chromadb` `pydantic` `lcel` `langchain-expression-language`
+`huggingface` `streamlit` `python` `machine-learning` `nlp`
+`large-language-models` `prompt-engineering` `ai` `deep-learning` `chatbot`
+`langsmith` `langgraph` `embeddings` `transformers` `tutorial`
 
 ---
 
